@@ -17,8 +17,11 @@ var authController = require('./controllers/auth.js');
  */
 var RedditAPI = require('./lib/reddit.js');
 var connection = mysql.createPool({
-    user: 'root',
-    database: 'reddit'
+    host     : 'localhost',
+    user     : 'root', // CHANGE THIS :)
+    password : 'admin',
+    database: 'reddit',
+    connectionLimit: 10
 });
 var myReddit = new RedditAPI(connection);
 
@@ -153,6 +156,7 @@ app.post('/createPost', onlyLoggedIn, function(request, response) {
 });
 
 // Listen
+/*
 var port = process.env.PORT || 3000;
 app.listen(port, function() {
     // This part will only work with Cloud9, and is meant to help you find the URL of your web server :)
@@ -162,4 +166,9 @@ app.listen(port, function() {
     else {
         console.log('Web server is listening on http://localhost:' + port);
     }
+});
+*/
+
+var server = app.listen(3333, function () {
+    console.log('Web server is listening.');
 });

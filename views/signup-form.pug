@@ -1,0 +1,12 @@
+extends layout.pug
+block title
+    title Please sign up
+block content
+    h1 Signup
+    form(action="/auth/signup", method="POST")
+        p
+            input(type="text", name="username", placeholder="Enter your username" required)
+        p
+            input(type="password", name="password", placeholder="Enter your password" required)
+        p
+            button(type="submit") Signup!
