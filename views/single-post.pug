@@ -1,0 +1,42 @@
+extends layout.pug
+
+block title
+    title Welcome to Reddit Clone!
+
+block singlePost
+    div.container
+        img(src="/static/reddit.png")
+    div.container
+        h2
+            a(href=post.url, target="_blank")= post.title
+            p Submitted by
+                a(href="/u/" + post.user.username)= ' ' + post.user.username
+                span  in
+                a(href="/r/" + post.subreddit.name)  /r/#{post.subreddit.name}
+            p Score: #{post.voteScore} Upvotes: #{post.numUpvotes} Downvotes: #{post.numDownvotes}
+            form(action="/vote" method="POST")
+                input(type="hidden" name="postId" value=post.id)
+                button.btn.btn-success(type="submit" name="vote" value="1")
+                    i.fa.fa-thumbs-o-up(aria-hidden="true")
+                span(style="margin-left: 5px;")
+                button.btn.btn-danger(type="submit" name="vote" value="-1")
+                    i.fa.fa-thumbs-o-down(aria-hidden="true")
+                span(style="margin-left: 5px;")
+            button#myBtn.btn.btn-warning Add comment
+            h3.commentsH3 Comments:
+            ul
+                each comment in comments
+                    li
+                        h3= comment.text
+            // The Modal
+            div#myModal.modal
+                // The modal content
+                div.modal-content
+                    span.close
+                    form.form-horizontal(action="/createComment" method="POST")
+                        label Your comment:
+                        textarea.form-control(rows="2" name="text")
+                        input(type="hidden" name="userId" value=post.user.id)
+                        input(type="hidden" name="postId" value=post.id)
+                        button#btn-post.btn.btn-primary(type="submit") Post!
+
