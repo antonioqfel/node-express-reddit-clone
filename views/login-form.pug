@@ -2,11 +2,24 @@ extends layout.pug
 block title
     title Please login
 block content
-    h1 Login
-    form(action="/auth/login", method="POST")
-        p
-            input(type="text", name="username", placeholder="Enter your username" required)
-        p
-            input(type="password", name="password", placeholder="Enter your password" required)
-        p
-            button(type="submit") Login!
+    div(class="container")
+        h1 Log in!
+        //form(action="/auth/login", method="POST")
+        //   p
+        //       input(type="text", name="username", placeholder="Enter your username" required)
+        //   p
+        //       input(type="password", name="password", placeholder="Enter your password" required)
+        //   p
+        //       button(type="submit") Log in!
+        form.form-horizontal(action="/auth/login", method="POST")
+            div.form-group
+                label.col-sm-1.control-label(for="inputUsername2") Username
+                div.col-sm-10
+                    input.form-control#inputUsername2(type="text" placeholder="Email" name="username" required)
+            div.form-group
+                label.col-sm-1.control-label(for="inputPassword2") Password
+                div.col-sm-10
+                    input.form-control#inputPassword2(type="password" placeholder="Password" name="password" required)
+            div.form-group
+                div.col-sm-offset-1.col-sm-10
+                    button.btn.btn-primary(type="submit") Log in

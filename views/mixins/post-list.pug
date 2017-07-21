@@ -1,11 +1,22 @@
 mixin postList(posts)
-    ul.post-list
-        each post in posts
-            li.post
+   if isSubreddit
+        h2= isSubreddit.name
+        p(id="description") #{isSubreddit.description}
+   ul.post-list
+       each post in posts
+           li.post
                 h2
+                    img(src="/static/face.png")
                     a(href=post.url, target="_blank")= post.title
                     p Submitted by
-                        a(href="/u/" + post.user.username)= post.user.username
+                        a(href="/u/" + post.user.username)= ' ' + post.user.username
                         span  in
-                        a(href="/r/" + post.subreddit.name) /r/#{post.subreddit.name}
+                        a(href="/r/" + post.subreddit.name)  /r/#{post.subreddit.name}
                     p Score: #{post.voteScore} Upvotes: #{post.numUpvotes} Downvotes: #{post.numDownvotes}
+                    form(action="/vote" method="POST")
+                        input(type="hidden" name="postId" value=post.id)
+                        button.btn.btn-success(type="submit" name="vote" value="1")
+                            i.fa.fa-thumbs-o-up(aria-hidden="true")
+                        span(style="margin-left: 5px;")
+                        button.btn.btn-danger(type="submit" name="vote" value="-1")
+                            i.fa.fa-thumbs-o-down(aria-hidden="true")

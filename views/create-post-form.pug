@@ -1,0 +1,24 @@
+extends layout.pug
+block title
+    title Create a post
+block content
+    div(class="container")
+        h1 Share a new link!
+        form(action="/createPost", method="POST", class="form-horizontal")
+            div(class="form-group")
+                label(class="col-sm-1 control-label") Subreddit
+                div(class="col-sm-10")
+                    select#selectNameSubreddit.form-control(name="subredditId")
+                        each subreddit in subreddits
+                            option(value=subreddit.id) #{subreddit.name}
+            div(class="form-group")
+                label(for="url" class="col-sm-1 control-label") Url
+                div(class="col-sm-10")
+                    input(type="text" class="form-control" id="url" placeholder="http://example.com" name="url" required)
+            div(class="form-group")
+                label(for="title" class="col-sm-1 control-label") Title
+                div(class="col-sm-10")
+                    input(type="text" class="form-control" id="title" placeholder="Title" name="title" required)
+            div(class="form-group")
+                div(class="col-sm-offset-1 col-sm-10")
+                    button(type="submit" class="btn btn-primary") Create post

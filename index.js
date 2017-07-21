@@ -1,5 +1,9 @@
+'user strict';
+
 var express = require('express');
 var mysql = require('promise-mysql');
+
+var emoji = require('node-emoji');
 
 // Express middleware
 var bodyParser = require('body-parser'); // reads request bodies from POST requests
@@ -25,12 +29,15 @@ var connection = mysql.createPool({
 });
 var myReddit = new RedditAPI(connection);
 
-
+console.log('myReddit', myReddit.luke());
 // Create a new Express web server
 var app = express();
 
 // Specify the usage of the Pug template engine
 app.set('view engine', 'pug');
+
+// Serving static files in Express
+app.use('/static', express.static('static_files'));
 
 /*
  This next section specifies the middleware we want to run.
@@ -58,7 +65,7 @@ This custom middleware checks in the cookies if there is a SESSION token and val
 NOTE: This middleware is currently commented out! Uncomment it once you've implemented the RedditAPI
 method `getUserFromSession`
  */
-// app.use(checkLoginToken(myReddit));
+app.use(checkLoginToken(myReddit));
 
 
 
@@ -80,8 +87,7 @@ controller gets returned from that function.
  */
 app.use('/auth', authController(myReddit));
 
-/*
- This next middleware will allow us to serve static files, as if our web server was a file server.
+/* This next middleware will allow us to serve static files, as if our web server was a file server.
  To do this, we attach the middleware to the /static URL path. This means any URL that starts with
  /static will go thru this middleware. We setup the static middleware to look for files under the public
  directory which is at the root of the project. This basically "links" the public directory to a URL
@@ -99,6 +105,9 @@ app.use('/static', express.static(__dirname + '/public'));
 
 // Regular home Page
 app.get('/', function(request, response) {
+
+    response.locals.isSubreddit = false;
+
     myReddit.getAllPosts()
     .then(function(posts) {
         response.render('homepage', {posts: posts});
@@ -120,16 +129,93 @@ app.get('/subreddits', function(request, response) {
 
 // Subreddit homepage, similar to the regular home page but filtered by sub.
 app.get('/r/:subreddit', function(request, response) {
-    response.send("TO BE IMPLEMENTED");
+
+    return myReddit.getSubredditByName(request.params.subreddit)
+
+        .then(result => {
+            if (result === null) {
+                 response.sendStatus(404);
+            }
+            else {
+                response.locals.isSubreddit = result;
+                console.log(result);
+                return result;
+            }
+        })
+        .then(result => {
+
+            return myReddit.getAllPosts(result)
+
+                .then(function(posts) {
+                    console.log('my result is:' + posts);
+                    response.render('homepage', {posts: posts});
+                })
+                .catch(function(error) {
+                    response.render('error', {error: error});
+                })
+        })
 });
 
 // Sorted home page
 app.get('/sort/:method', function(request, response) {
-    response.send("TO BE IMPLEMENTED");
+
+    return Promise.resolve()
+        .then(result => {
+
+            if(request.params.method !== 'hot' && request.params.method !== 'top') {
+                
+                response.status(404);
+            }
+            else {
+
+                var obj = {
+                    sortingMethod: request.params.method
+                }
+
+                return obj;
+            }
+        })
+        .then(method => {
+
+            myReddit.getAllPosts(method)
+
+                .then(function(posts) {
+                    response.render('homepage', {posts: posts});
+                })
+                .catch(function(error) {
+                    response.render('error', {error: error});
+                });
+        })
 });
 
 app.get('/post/:postId', function(request, response) {
-    response.send("TO BE IMPLEMENTED");
+
+
+    console.log(request.params.postId);
+
+    Promise.all([myReddit.getSinglePost(request.params.postId), myReddit.getCommentsForPost(request.params.postId)])
+        .then(result => {
+            // console.log('first result:');
+            // console.log(result[0]);
+            // console.log('second result');
+            console.log(result[1]);
+            console.log(emoji.emojify('I :heart: :coffee:!'));
+
+
+            // Loop thru the array to emojify text
+            for(var i = 0; i < result[1].length; i++) {
+
+                result[1][i].text = emoji.emojify(result[1][i].text);
+
+            }
+
+            response.render('single-post', {post: result[0], comments: result[1]});
+        })
+
+
+    //getSinglePost(postId)
+    //getCommentsForPost(postId)
+
 });
 
 /*
@@ -142,18 +228,66 @@ This basically says: if there is a POST /vote request, first pass it thru the on
 middleware calls next(), then also pass it to the final request handler specified.
  */
 app.post('/vote', onlyLoggedIn, function(request, response) {
-    response.send("TO BE IMPLEMENTED");
+
+
+    var myVote = {
+        postId: request.body.postId,
+        userId: request.loggedInUser.userId,
+        voteDirection: parseInt(request.body.vote)
+    }
+
+    console.log(myVote);
+
+    return myReddit.createVote(myVote)
+        .then(result => {
+            response.send("Thank your for your vote!");
+        })
 });
 
 // This handler will send out an HTML form for creating a new post
 app.get('/createPost', onlyLoggedIn, function(request, response) {
-    response.send("TO BE IMPLEMENTED");
+
+    return myReddit.getAllSubreddits()
+        .then(allSubreddits => {
+            response.render('create-post-form', {subreddits: allSubreddits});
+        })
+
 });
 
 // POST handler for form submissions creating a new post
 app.post('/createPost', onlyLoggedIn, function(request, response) {
-    response.send("TO BE IMPLEMENTED");
+
+    console.log('My user id: ', request.loggedInUser.userId)
+
+    var myPost = {
+        userId: request.loggedInUser.userId,
+        title: request.body.title,
+        url: request.body.url,
+        subredditId: request.body.subredditId
+    }
+
+    return myReddit.createPost(myPost)
+        .then(result => {
+
+            response.redirect(`/post/${result}`);
+        });
+
 });
+
+
+app.post('/createComment', onlyLoggedIn, function(request, response) {
+    console.log('Outside');
+
+    return myReddit.luke()
+        .then(result => {
+            console.log('Inside', result);
+            response.redirect(`/post/${request.body.postId}`);
+        }).catch(error => {
+            console.log(error);
+            response.send(error);
+        })
+});
+
 
 // Listen
 /*

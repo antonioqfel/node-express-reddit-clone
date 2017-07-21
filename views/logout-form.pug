@@ -1,0 +1,8 @@
+extends layout.pug
+block title
+    title Log out
+block content
+    h1 Log out
+    form(action="/auth/logout", method="POST")
+        p
+            button(type="logout") Log out!
