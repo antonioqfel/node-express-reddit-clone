@@ -20,16 +20,22 @@ var authController = require('./controllers/auth.js');
  long as the web server is running, which is 24/7.
  */
 var RedditAPI = require('./lib/reddit.js');
+// var connection = mysql.createPool({
+//     host: 'localhost',
+//     user: 'root', // CHANGE THIS :)
+//     password: 'admin',
+//     database: 'reddit',
+//     connectionLimit: 10
+// });
 var connection = mysql.createPool({
-    host     : 'localhost',
-    user     : 'root', // CHANGE THIS :)
-    password : 'admin',
-    database: 'reddit',
+    host: 'us-cdbr-iron-east-05.cleardb.net',
+    user: 'b575a0f1bebbae', // CHANGE THIS :)
+    password: 'a037e52f',
+    database: 'heroku_554c09a6b5aac20',
     connectionLimit: 10
 });
 var myReddit = new RedditAPI(connection);
 
-console.log('myReddit', myReddit.luke());
 // Create a new Express web server
 var app = express();
 
@@ -68,9 +74,6 @@ method `getUserFromSession`
 app.use(checkLoginToken(myReddit));
 
 
-
-
-
 /*
 app.use can also take a path prefix as a parameter. the next app.use says that anytime the request URL
 starts with /auth, the middleware exported by controllers/auth.js should be called.
@@ -104,37 +107,37 @@ app.use('/auth', authController(myReddit));
 app.use('/static', express.static(__dirname + '/public'));
 
 // Regular home Page
-app.get('/', function(request, response) {
+app.get('/', function (request, response) {
 
     response.locals.isSubreddit = false;
 
     myReddit.getAllPosts()
-    .then(function(posts) {
-        response.render('homepage', {posts: posts});
-    })
-    .catch(function(error) {
-        response.render('error', {error: error});
-    })
+        .then(function (posts) {
+            response.render('homepage', {posts: posts});
+        })
+        .catch(function (error) {
+            response.render('error', {error: error});
+        })
 });
 
 // Listing of subreddits
-app.get('/subreddits', function(request, response) {
+app.get('/subreddits', function (request, response) {
     /*
     1. Get all subreddits with RedditAPI
     2. Render some HTML that lists all the subreddits
      */
-    
+
     response.send("TO BE IMPLEMENTED");
 });
 
 // Subreddit homepage, similar to the regular home page but filtered by sub.
-app.get('/r/:subreddit', function(request, response) {
+app.get('/r/:subreddit', function (request, response) {
 
     return myReddit.getSubredditByName(request.params.subreddit)
 
         .then(result => {
             if (result === null) {
-                 response.sendStatus(404);
+                response.sendStatus(404);
             }
             else {
                 response.locals.isSubreddit = result;
@@ -146,24 +149,24 @@ app.get('/r/:subreddit', function(request, response) {
 
             return myReddit.getAllPosts(result)
 
-                .then(function(posts) {
+                .then(function (posts) {
                     console.log('my result is:' + posts);
                     response.render('homepage', {posts: posts});
                 })
-                .catch(function(error) {
+                .catch(function (error) {
                     response.render('error', {error: error});
                 })
         })
 });
 
 // Sorted home page
-app.get('/sort/:method', function(request, response) {
+app.get('/sort/:method', function (request, response) {
 
     return Promise.resolve()
         .then(result => {
 
-            if(request.params.method !== 'hot' && request.params.method !== 'top') {
-                
+            if (request.params.method !== 'hot' && request.params.method !== 'top') {
+
                 response.status(404);
             }
             else {
@@ -179,16 +182,16 @@ app.get('/sort/:method', function(request, response) {
 
             myReddit.getAllPosts(method)
 
-                .then(function(posts) {
+                .then(function (posts) {
                     response.render('homepage', {posts: posts});
                 })
-                .catch(function(error) {
+                .catch(function (error) {
                     response.render('error', {error: error});
                 });
         })
 });
 
-app.get('/post/:postId', function(request, response) {
+app.get('/post/:postId', function (request, response) {
 
 
     console.log(request.params.postId);
@@ -203,7 +206,7 @@ app.get('/post/:postId', function(request, response) {
 
 
             // Loop thru the array to emojify text
-            for(var i = 0; i < result[1].length; i++) {
+            for (var i = 0; i < result[1].length; i++) {
 
                 result[1][i].text = emoji.emojify(result[1][i].text);
 
@@ -227,7 +230,7 @@ The app.* methods of express can actually take multiple middleware, forming a ch
 This basically says: if there is a POST /vote request, first pass it thru the onlyLoggedIn middleware. If that
 middleware calls next(), then also pass it to the final request handler specified.
  */
-app.post('/vote', onlyLoggedIn, function(request, response) {
+app.post('/vote', onlyLoggedIn, function (request, response) {
 
 
     var myVote = {
@@ -245,7 +248,7 @@ app.post('/vote', onlyLoggedIn, function(request, response) {
 });
 
 // This handler will send out an HTML form for creating a new post
-app.get('/createPost', onlyLoggedIn, function(request, response) {
+app.get('/createPost', onlyLoggedIn, function (request, response) {
 
     return myReddit.getAllSubreddits()
         .then(allSubreddits => {
@@ -255,7 +258,7 @@ app.get('/createPost', onlyLoggedIn, function(request, response) {
 });
 
 // POST handler for form submissions creating a new post
-app.post('/createPost', onlyLoggedIn, function(request, response) {
+app.post('/createPost', onlyLoggedIn, function (request, response) {
 
     console.log('My user id: ', request.loggedInUser.userId)
 
@@ -275,7 +278,7 @@ app.post('/createPost', onlyLoggedIn, function(request, response) {
 });
 
 
-app.post('/createComment', onlyLoggedIn, function(request, response) {
+app.post('/createComment', onlyLoggedIn, function (request, response) {
     console.log('Outside');
 
     return myReddit.luke()
