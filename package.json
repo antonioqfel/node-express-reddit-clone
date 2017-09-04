@@ -10,6 +10,9 @@
     "type": "git",
     "url": "git+https://github.com/ziad-saab/node-express-reddit-clone.git"
   },
+  "engines": {
+    "node": "8.2.1"
+  },
   "keywords": [],
   "author": "Ziad Saab <ziad.saab@gmail.com>",
   "license": "ISC",
